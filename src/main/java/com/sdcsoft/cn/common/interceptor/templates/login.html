@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <title>bkse</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link  th:href="@{/css/login.css}" rel="stylesheet"/>
+    <style>
+
+    </style>
+</head>
+<body>
+<div id="login">
+    <h1>登录管理</h1>
+    <form  >
+        <p><input type="text" name="user" id="user" placeholder="请输入用户名"/></p>
+        <p><input type="password" name="password" id="pwd" placeholder="密码"/></p>
+        <p><input type="button" id="submit" value="登录"  /></p>
+    </form>
+</div>
+
+</body>
+<script th:src="@{/layui/layui.js}"></script>
+
+<script>
+    layui.use(['table','element','layer','jquery','form'],  function() {
+        var $ = layui.jquery;
+        //<![CDATA[
+        $("#submit").click(function () {
+            var username=  $("#user").val();
+            var password= $("#pwd").val();
+            $.ajax({
+                type: "POST",
+                url: "loginin",
+                data: "username="+username+"&password="+password,
+                success: function(msg){
+                    if (msg.code==200) {
+                        location.href = location.href.substring(0,location.href.length-5)+"index";
+                    }else {
+                        alert(msg.msg);
+                    }
+                }
+            });
+        })
+
+
+
+    })
+
+    //]]>
+
+
+
+</script>
+
+</html>

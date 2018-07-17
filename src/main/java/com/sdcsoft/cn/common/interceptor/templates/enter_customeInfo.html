@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" >
+<head>
+
+    <title>客户信息</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}"/>
+
+    <link rel="stylesheet" th:href="@{/css/font_eolqem241z66flxr.css}"/>
+    <link rel="stylesheet" th:href="@{/css/deviceInfo.css}"/>
+    <link rel="stylesheet" th:href="@{/css/but_edit.css}"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote news_search">
+    <div class="layui-inline">
+        <div class="layui-input-inline">
+            <input type="text" value="" placeholder="请输入关键字" class="layui-input search_input"/>
+        </div>
+        <a class="layui-btn search_btn">查询</a>
+    </div>
+    <div class="layui-inline">
+        <a class="layui-btn layui-btn-normal newsAdd_btn" id="customerAdd">添加信息</a>
+    </div>
+
+</blockquote>
+<div class="layui-form news_list">
+    <table id="customerInfo" lay-filter="test"></table>
+    <script type="text/html" id="barEdit">
+
+        <a class="layui-btn layui-btn-mini layui-btn-edit"     lay-event="edit">编辑</a>
+
+       <!-- <a class="layui-btn layui-btn-danger layui-btn-mini layui-btn-edit" lay-event="del">删除</a>-->
+    </script>
+</div>
+<div id="select_prod" class="layui-form" hidden="hidden">
+    <form class="layui-form" >
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">客户名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="customerName" id="customerName" lay-verify="required" placeholder="请输入客户名称" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">客户状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="0" title="已冻结" />
+                <input type="radio" name="status" value="1" title="未冻结"  />
+            </div>
+        </div>
+    </form>
+</div>
+
+<script th:src="@{/layui/layui.js}"></script>
+<script >
+    layui.use(['table','element','layer','jquery','form'],  function(){
+        var table = layui.table;
+        var element = layui.element;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var form =layui.form;
+        //表格操作
+        //<![CDATA[
+        table.render({
+            elem: '#customerInfo'
+            ,height: 315
+            ,url: 'enterprise/getCustomerInfo'//数据接口
+            ,page: true //开启分页
+            ,cols: [[ //表头
+                {field: 'id', title: 'ID',  sort:true,fixed: 'left', width:100}
+                ,{field: 'customerName', title: '客户名称',sort:true, width:200}
+                ,{field: 'status', title: '运行状态', width:100}
+                ,{field:'', title: '操作', width:100,toolbar:"#barEdit"}
+            ]]
+            ,done: function(res, page, count){
+                //如果是异步请求数据方式，res即为你接口返回的信息。
+                //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+
+                //分类显示中文名称
+                $("[data-field='status']").children().each(function(){
+                    if($(this).text()=='1'){
+                        $(this).text("未冻结")
+                    }else if($(this).text()=='0'){
+                        $(this).text("已冻结")
+                    }
+                });
+
+            }
+        });
+        $("#customerAdd").click(function () {
+            layer.open({
+                type:1,
+                shadeClose: true,
+                shade: 0.8,
+                content:$("#select_prod"),
+                area:['400px','200px'],
+                btn: ['确定', '取消'],
+                success: function(index, layero){
+                    //清空操作
+                    $("#customerName").val("");
+                    $("input[name='status'][value="+0+"]").attr("checked",true);
+                    form.render();
+                },
+                yes: function(index, layero){
+
+                    customerName =$("#customerName").val();
+                    status =$("input[name='status']:checked").val();
+                    $.ajax({
+                        type: "POST",
+                        url: "enterprise/addCustomerInfo",
+                        data: "customerName="+customerName+"&status="+status ,
+                        success: function (msg) {
+                            if (msg=='success') {
+                                layer.msg("添加成功");
+                                layer.close(index);
+                                location.reload();
+                            }
+                        }
+                    })
+                }
+                ,btn2: function(index, layero){
+                    layer.close(index);
+                }
+            })
+        })
+
+        table.on('tool(test)', function(obj){
+            var data = obj.data;
+            var id =data.id;
+            var customerName=data.customerName;
+            var status=data.status;
+            if(obj.event === 'detail'){
+               /* layer.msg('ID：'+ data.id + ' 的查看操作');*/
+            } else if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    obj.del();
+                    layer.close(index);
+                    $.ajax({
+                        type: "POST",
+                        url: "enterprise/delEnterpriseSaleRecordByid?saleId="+id,
+                        success: function(msg){
+                            if (msg=='success') {
+                                obj.del();
+                                layer.msg("删除成功");
+                                layer.close(index);
+                            }
+                        }
+                    });
+                });
+
+            } else if(obj.event === 'edit'){
+               layer.open({
+                    type: 1,
+                    title: '编辑客户信息',
+                    shadeClose: true,
+                    shade: 0.8,
+                    content:$("#select_prod"),
+                    area:['400px','300px'],
+                    btn: ['确定', '取消'],
+                    //当前层索引参数（index）、当前层的DOM对象（layero）
+                    success: function(index, layero){
+                         $("#customerName").val(customerName);
+                        $("input[name='status'][value="+status+"]").attr("checked",true);
+                        form.render();
+                    },
+                   yes: function(index, layero){
+                       customerName=$("#customerName").val();
+                       status=$("input[name='status']:checked").val();
+                        $.ajax({
+                            type: "POST",
+                            url: "enterprise/updateCustomerInfo",
+                            data: "customerId="+id+"&customerName="+customerName+
+                           "&status="+status ,
+                            success: function (msg) {
+                                if (msg=='success') {
+                                    obj.update({
+                                        id: id,
+                                        customerName: customerName,
+                                        status: status
+                                    });
+
+                                    $("[data-field='status']").children().each(function () {
+                                        if ($(this).text() == '1') {
+                                            $(this).text("未冻结")
+                                        } else if ($(this).text() == '0') {
+                                            $(this).text("已冻结")
+                                        }
+                                    });
+                                    layer.msg("修改成功");
+                                    layer.close(index);
+                                }
+                            }
+                        })
+                    }
+                    ,btn2: function(index, layero){
+                        layer.close(index);
+                    }
+
+                });
+
+
+            }
+        });
+        //]]>
+
+
+    });
+
+</script>
+</body>
+</html>

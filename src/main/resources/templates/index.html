@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" >
+<head>
+
+	<title>简洁智能数据管理系统</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<link rel="icon" th:href="@{/images/favicon.ico}" type="image/x-icon" />
+	<link rel="shortcut icon" th:href="@{/images/favicon.ico}"  type="image/x-icon" />
+	<link rel="stylesheet" th:href="@{/layui/css/layui.css}"/>
+	<link rel="stylesheet" th:href="@{/css/leftMenu.css}"/>
+</head>
+<body  class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+	<div class="layui-header">
+		<div class="layui-logo">简洁在线管理系统</div>
+		<!-- 头部区域（可配合layui已有的水平导航） -->
+		<ul class="layui-nav layui-layout-left">
+			<li class="layui-nav-item"><a href="">控制台</a></li>
+			<li class="layui-nav-item"><a href="">商品管理</a></li>
+			<li class="layui-nav-item"><a href="">用户</a></li>
+			<li class="layui-nav-item">
+				<a href="javascript:;">其它系统</a>
+				<dl class="layui-nav-child">
+					<dd><a href="">邮件管理</a></dd>
+					<dd><a href="">消息管理</a></dd>
+					<dd><a href="">授权管理</a></dd>
+				</dl>
+			</li>
+		</ul>
+		<ul class="layui-nav layui-layout-right">
+			<li class="layui-nav-item">
+				<a href="javascript:;" >
+					<img src="http://t.cn/RCzsdCq" class="layui-nav-img"/>
+					<label id="userName" style="color: #eb7350"></label>
+
+				</a>
+				<dl class="layui-nav-child">
+					<dd><a href="">基本资料</a></dd>
+					<dd><a href="">安全设置</a></dd>
+				</dl>
+			</li>
+			<li class="layui-nav-item"><a href="logout">退出</a></li>
+		</ul>
+	</div>
+
+	<div class="layui-side layui-bg-black">
+		<div class="layui-side-scroll " >
+			<div id="sidemenubar" lay-filter="test"></div>
+		</div>
+		<!--<ul id="sidemenubar" class="layui-nav layui-side-scroll  layui-nav-tree
+		layui-bg-black layui-inline" lay-filter="test" style="margin-right: 10px;"></ul>-->
+	</div>
+
+	<div class="layui-body">
+
+		<div class="layui-tab" lay-filter="demo" lay-allowclose="true" >
+			<ul class="layui-tab-title top_tab"  >
+				<li class="layui-this" style="background-color:#009688;color:#fff;">欢迎页面</li>
+			</ul>
+
+			<ul class="rightmenu" style="display: none;position: absolute;">
+				<li data-type="closethis">关闭当前</li>
+				<li data-type="closeall">关闭所有</li>
+			</ul>
+			<div class="layui-tab-content" >
+				<div class="layui-tab-item layui-show background-image  first-tab"  >
+					<marquee direction="left" align="bottom" height="80" width="100%" onmouseout="this.start()"
+							 onmouseover="this.stop()" scrollamount="8" scrolldelay="2" style="color: #009f95;font-size: 40px">欢迎使用简洁在线管理系统</marquee>
+					<p>说明：本系统为后台数据管理系统测试版，目前针对企业二维码功能使用作如下说明：</p>
+					<br/>
+					<p>1、如下图所示：点击页面左侧菜单【企业信息管理】，弹出菜单子选项，点击【控制器信息】，则出现右侧内容区域</p>
+					<br/>
+					<div class="edit-png"></div>
+					<br/>
+					<p>2、点击【二维码生成】按钮，弹出如下界面</p>
+					<div class="edit-num"></div>
+					<br/>
+					<p>3、在界面中分别输入起始编号和结束编号，点击【生成二维码】按钮，系统将根据您输入的编号另起一个窗口弹出您需要的二维码，前提是您的编号必须为有效编号。</p>
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+					<br/>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="layui-footer">
+		<!-- 底部固定区域 -->
+		© sdcsoft.com - 简洁软件
+	</div>
+</div>
+
+<script th:src="@{/layui/layui.js}"></script>
+<script th:src="@{/js/leftMenu.js}"></script>
+
+</body>
+</html>

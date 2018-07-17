@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" >
+<head>
+
+    <title>控制器生产厂家信息</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}"/>
+    <link rel="stylesheet" th:href="@{/css/font_eolqem241z66flxr.css}"/>
+    <link rel="stylesheet" th:href="@{/css/deviceInfo.css}"/>
+    <link rel="stylesheet" th:href="@{/css/but_edit.css}"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote news_search">
+    <div class="layui-inline">
+        <div class="layui-input-inline">
+            <input type="text" id="manufactureSearch"  placeholder="请输入制造商关键字" class="layui-input search_input"/>
+        </div>
+        <a class="layui-btn search_btn" id="search">查询</a>
+    </div>
+    <div class="layui-inline">
+        <a class="layui-btn layui-btn-normal newsAdd_btn" id="manufacturerAdd">添加信息</a>
+    </div>
+    <!--<div class="layui-inline">
+        <button type="button" class="layui-btn" id="excelUpload">
+            <i class="layui-icon">&#xe62d;</i>Excel批量导入
+        </button>
+    </div>-->
+
+</blockquote>
+<div class="layui-form news_list">
+    <table id="manufacturerTable" lay-filter="test"></table>
+    <script type="text/html" id="barEdit">
+       <!-- <a class="layui-btn layui-btn-primary layui-btn-mini"   lay-event="detail">查看</a>-->
+        <a class="layui-btn layui-btn-mini layui-btn-edit"     lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-mini layui-btn-edit" lay-event="del">删除</a>
+    </script>
+</div>
+<div id="select_prod" class="layui-form" hidden="hidden">
+    <form class="layui-form" >
+        <input  name="manufacturerId" id="manufacturerId"  hidden="true"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">厂家编号</label>
+            <div class="layui-input-block">
+                <input type="text" name="manufacturerCode" id ="manufacturerCode" lay-verify="required" placeholder="请输入厂家编号" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">厂家名称</label>
+            <div class="layui-input-block">
+                <input type="text" id="manufacturerName" lay-verify="required" placeholder="请输入厂家名称" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script th:src="@{/layui/layui.js}"></script>
+<script  >
+    layui.use(['table','element','layer','jquery','form','upload'],  function(){
+        var table = layui.table;
+        var element = layui.element;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var form =layui.form;
+        var upload=layui.upload;
+        //第一个实例
+        //<![CDATA[
+        var tableIns =table.render({
+            elem: '#manufacturerTable'
+            ,height: 315
+            ,url: 'enterprise/getManufacturerInfo'//数据接口
+            ,page: true //开启分页
+            ,cols: [[ //表头
+                {field: 'id', title: 'ID',  sort:true,fixed: 'left', width:100}
+                ,{field: 'manufacturerCode', title: '控制器生产厂家编号',sort:true, width:200}
+                ,{field: 'manufacturerName', title: '控制器制造商', width:200}
+                ,{field:'right', title: '操作', width:177,toolbar:"#barEdit"}
+            ]]
+        });
+        //执行上传操作
+        var uploadInst = upload.render({
+            elem: '#excelUpload' //绑定元素
+            ,url: '/excelUpload/' //上传接口
+            ,done: function(res){
+                //上传完毕回调
+            }
+            ,error: function(){
+                //请求异常回调
+            }
+        });
+        $("#manufacturerAdd").click(function () {
+            layer.open({
+                type:1,
+                shadeClose: true,
+                shade: 0.8,
+                content:$("#select_prod"),
+                area:['400px','200px'],
+                btn: ['确定', '取消'],
+                success: function(index, layero){
+
+                },
+                yes: function(index, layero){
+                    manufacturerCode =$("#manufacturerCode").val();
+                    manufacturerName =$("#manufacturerName").val();
+                    var param="manufacturerCode="+manufacturerCode+"&manufacturerName="+manufacturerName  ;
+                    $.ajax({
+                        type: "POST",
+                        url: "enterprise/addManufacturerInfo",
+                        data: param,
+                        success: function (msg) {
+                            if (msg=='success') {
+                                layer.msg("添加成功");
+                                layer.close(index);
+                                location.reload();
+                            }else {
+                                location.href='nopermission.html';
+                            }
+                        }
+                    })
+                }
+                ,btn2: function(index, layero){
+                    layer.close(index);
+                }
+            });
+        });
+        $("#search").click(function () {
+            tableIns.reload({
+               where: { //设定异步数据接口的额外参数，任意设
+                    nameLike: $("#manufactureSearch").val(),
+
+                }
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                },
+            });
+        });
+        table.on('tool(test)', function(obj){
+            var data = obj.data;
+            var id =data.id;
+            var manufacturerCode=data.manufacturerCode;
+            var manufacturerName =data.manufacturerName;
+            console.log(data);
+            if(obj.event === 'detail'){
+                layer.msg('ID：'+ data.id + ' 的查看操作');
+            } else if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+
+                    $.ajax({
+                        type: "POST",
+                        url: "enterprise/delManufacturerInfo?manufacturerId="+id,
+                        success: function(msg){
+                            if (msg) {
+                                obj.del();
+                                layer.msg("删除成功");
+                                layer.close(index);
+                            }
+                        }
+                    });
+                });
+
+            } else if(obj.event === 'edit'){
+                layer.open({
+                    type: 1,
+                    title: '编辑客户信息',
+                    shadeClose: true,
+                    shade: 0.8,
+                    content:$("#select_prod"),
+                    area:['400px','450px'],
+                    btn: ['确定', '取消'],
+                    //当前层索引参数（index）、当前层的DOM对象（layero）
+                    success: function(index, layero){
+
+                        $("#manufacturerCode").val(manufacturerCode);
+                        $("#manufacturerName").val(manufacturerName);
+
+                        form.render();
+                    },
+                    yes: function(index, layero){
+                        manufacturerCode=$("#manufacturerCode").val();
+                        manufacturerName=$("#manufacturerName").val();
+
+                        $.ajax({
+                            type: "POST",
+                            url: "enterprise/updateManufacturerInfo",
+                            data: "manufacturerId="+id+"&manufacturerCode="+manufacturerCode+"&manufacuterName="+manufacturerName ,
+                            success: function (msg) {
+                                obj.update({
+                                    id: id,
+                                    manufacturerCode: manufacturerCode,
+                                    manufacturerName:manufacturerName
+                                });
+
+                                layer.msg("修改成功");
+                                layer.close(index);
+                            }
+                        })
+                    }
+                    ,btn2: function(index, layero){
+                        layer.close(index);
+                    }
+
+                });
+
+
+            }
+        });
+        //]]>
+
+
+    });
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" >
+<head>
+
+	<title>文章列表--layui后台管理模板</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<link rel="stylesheet" th:href="@{/layui/css/layui.css}"/>
+	<link rel="stylesheet" th:href="@{/css/but_edit.css}"/>
+
+	<link rel="stylesheet" th:href="@{/css/font_eolqem241z66flxr.css}"/>
+	<link rel="stylesheet" th:href="@{/css/deviceInfo.css}"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote news_search">
+	<div class="layui-inline">
+		<div class="layui-input-inline">
+			<input type="text" value="" id="keyWord" placeholder="请输入关键字" class="layui-input search_input"/>
+		</div>
+		<a class="layui-btn search_btn" id="search">查询</a>
+	</div>
+	<div class="layui-inline">
+		<a class="layui-btn layui-btn-normal newsAdd_btn" id ="deviceAdd">添加信息</a>
+	</div>
+	<div class="layui-inline">
+		<button type="button" class="layui-btn" id="excelUpload">
+			<i class="layui-icon">&#xe62d;</i>Excel批量导入
+		</button>
+	</div>
+	<!--<div class="layui-inline">
+		<button type="button" class="layui-btn" id="btn">
+			<i class="layui-icon">&#xe62d;</i>确认导入
+		</button>
+	</div>-->
+</blockquote>
+<div class="layui-form news_list">
+	<table id="deviceTable" lay-filter="test"></table>
+	<script type="text/html" id="barEdit">
+		<!-- <a class="layui-btn layui-btn-primary layui-btn-mini"   lay-event="detail">查看</a>-->
+		<a class="layui-btn layui-btn-mini layui-btn-edit"     lay-event="edit">编辑</a>
+		<a class="layui-btn layui-btn-danger layui-btn-mini layui-btn-edit" lay-event="del">删除</a>
+	</script>
+</div>
+<!--弹窗内容-->
+<div id="select_prod" class="layui-form" hidden="hidden">
+	<form class="layui-form" action="enterprise/updateDeviceById">
+		<input  name="id"  id="id"  hidden="true"/>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">控制器编号</label>
+			<div class="layui-input-block">
+				<input type="text" name="deviceNo" id ="deviceNo"    placeholder="请输入控制器编号" autocomplete="off" class="layui-input"/>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">控制器名称</label>
+			<div class="layui-input-block">
+				<input type="text" name="nickName" id="nickName" lay-verify="required" placeholder="请输入控制器名称" autocomplete="off" class="layui-input"/>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">设备类型</label>
+			<div class="layui-input-block">
+				<input type="text" name="deviceType" id="deviceType" lay-verify="required" placeholder="请输入控制器类型" autocomplete="off" class="layui-input"/>
+			</div>
+		</div>
+
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">控制器厂家</label>
+			<div class="layui-input-block">
+				<select name="manufacturerId" id="manufacturerId" lay-filter="manufacture" lay-search="">
+				</select>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">销售状态</label>
+			<div class="layui-input-block">
+				<input type="radio" name="status" value="0" title="未销售" />
+				<input type="radio" name="status" value="1" title="已销售"  />
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">运行状态</label>
+			<div class="layui-input-block">
+				<input type="radio" name="runStatus" value="0" title="未运行" />
+				<input type="radio" name="runStatus" value="1" title="正在运行"  />
+
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">导入时间</label>
+			<div class="layui-input-block">
+				<input type="text" name="importTime" class="layui-input" id="importTime" />
+			</div>
+		</div>
+
+	</form>
+</div>
+<script th:src="@{/layui/layui.js}"></script>
+<script type="text/html" id="indexTpl">
+	{{d.LAY_TABLE_INDEX+1}}
+</script>
+
+<script  >
+    var util;
+    layui.use(['table','element','layer','jquery','form','util','laydate','upload'],  function(){
+        //<![CDATA[
+        util = layui.util;
+        var table = layui.table;
+        var element = layui.element;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var form =layui.form;
+        var laydate=layui.laydate;
+        var upload=layui.upload;
+        var data ;
+        var id ;
+        var deviceNo ;
+        var manufacturerId ;
+        var manufacturerName;
+        var status ;
+        var runStatus  ;
+        var importTime ;
+        var nickName  ;
+        laydate.render({
+            elem: '#importTime'
+            ,type: 'datetime'
+        });
+        //第一个实例
+        var tableIns = table.render({
+            elem: '#deviceTable'
+            ,height: 315
+            ,url: 'enterprise/getDeviceInfoByEnterpriseId'//数据接口
+            ,page: true //开启分页
+            ,cols: [[ //表头
+                { type: 'numbers',title: '序号',templet: '#indexTpl',width:50}
+				/*,{field: 'Id', title: 'ID', width:80, sort:true,fixed: 'left'}*/
+                ,{field: 'DeviceNo', title: '控制器编号',sort:true, width:200}
+               // ,{field: 'NickName', title: '控制器名称', width: 120}
+                ,{field: 'DeviceType', title: '控制器类型', width: 120}
+              //  ,{field: 'ManufacturerName', title: '控制器制造商', width:130}
+                ,{field: 'Status', title: '销售状态',sort:true, width: 100}
+                ,{field: 'RunStatus', title: '运行状态', sort:true,width: 100}
+                ,{field: 'ImportDatetime', title: '导入时间',sort:true, width:160}
+                ,{field:'right', title: '操作', width:177,toolbar:"#barEdit"}
+            ]]
+            ,done: function(res, page, count){
+
+                $('.layui-table th').css( 'font-weight', 'bold');
+                //分类显示中文名称
+                $("[data-field='Status']").children().each(function(){
+                    if($(this).text()=='1'){
+                        $(this).text("已销售")
+                    }else if($(this).text()=='0'){
+                        $(this).text("未销售")
+                    }
+                });
+                $("[data-field='RunStatus']").children().each(function(){
+                    if($(this).text()=='1'){
+                        $(this).text("正在运行")
+                    }else if($(this).text()=='0'){
+                        $(this).text("未运行")
+                    }
+                })
+            }
+        });
+        //执行上传操作
+        var uploadInst = upload.render({
+            elem: '#excelUpload' //绑定元素
+            ,acceptMime:'xls'
+            ,accept: 'file'
+            ,method: 'POST'
+           /* ,auto:false
+            ,bindAction: '#btn'*/
+			,url: 'enterprise/batchAddDevice' //上传接口
+            ,before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
+                var index = layer.load(2, {time: 1000});//上传loading
+            }
+            ,done: function(res){
+
+                setTimeout(function () {
+                    if (res.code == 7) {
+                        layer.msg(res.msg, {shift: -1}, function () {
+                            location.reload();
+                        });
+                        return;
+                    }
+                    layer.msg(res.msg);
+                },1500)
+            }
+            ,error: function(){
+                //请求异常回调
+                layer.closeAll('loading');
+                layer.msg('网络异常，请稍后重试！');
+            }
+        });
+			//关键字搜索
+			$("#search").click(function () {
+				tableIns.reload({
+					where: { //设定异步数据接口的额外参数，任意设
+						nameLike: $("#keyWord").val()
+					}
+					,page: {
+						curr: 1 //重新从第 1 页开始
+					},
+				});
+			});
+
+        $("#deviceAdd").click(function () {
+            layer.open({
+                type:1,
+                shadeClose: true,
+                shade: 0.8,
+                content:$("#select_prod"),
+                area:['400px','450px'],
+                btn: ['确定', '取消'],
+                //当前层索引参数（index）、当前层的DOM对象（layero）
+                success: function(index, layero){
+                    $.ajax({
+                        type: "GET",
+                        url: "enterprise/getManufacturerInfoAll",
+                        data: "",
+                        success: function(msg){
+                            for (var i=0;i<msg.length;i++) {
+                                $("#manufacturerId").append("<option value='"+msg[i].Id+"'>"
+                                    +msg[i].ManufacturerName+"</option>");                            }
+                            $("input[name='status'][value="+0+"]").attr("checked",true);
+                            $("input[name='runStatus'][value="+0+"]").attr("checked",true);
+                            form.render();
+                        }
+                    })
+                },
+                yes: function(index, layero){
+                    id =$("#id").val();
+                    deviceNo =$("#deviceNo").val();
+
+                    nickName =$("#nickName").val();
+                    manufacturerId =$("#manufacturerId").val();
+                    status =$("input[name='status']").val();
+                    runStatus =$("input[name='runStatus']").val();
+                    importTime =$("#importTime").val();
+                    deviceType =$("#deviceType").val();
+                    if (deviceNo.length!=20){
+                        layer.msg("请输入20位有效的控制器编码");
+                        return;
+					}
+					if ( nickName.trim()==''){
+                        layer.msg("请输入有效的控制器名称");
+                        return;
+					}
+                    if ( importTime.trim()==''){
+                        layer.msg("请选择时间");
+                        return;
+                    }
+                    $.ajax({
+                        type: "POST",
+                        url: "enterprise/addDevice",
+                        data:  "deviceNo="+deviceNo+
+                        "&nickName="+nickName+"&status="+status+"&manufacturerId="+manufacturerId+
+                        "&runStatus="+runStatus+"&importTime="+importTime+"&deviceType="+deviceType ,
+                        success: function (msg) {
+                            layer.msg("添加成功");
+                            layer.close(index);
+                            location.reload();
+                        }
+                    })
+                }
+                ,btn2: function(index, layero){
+                    layer.close(index);
+                }
+            })
+        })
+
+        table.on('tool(test)', function(obj){
+              data = obj.data;
+              id =data.Id;
+              deviceNo =data.DeviceNo;
+              manufacturerId =data.ManufacturerId;
+              manufacturerName =data.ManufacturerName;
+              status =data.Status;
+              runStatus =data.RunStatus;
+              importTime =data.ImportDatetime;
+              nickName =data.NickName;
+           	 deviceType=data.DeviceType;
+            if(obj.event === 'detail'){
+                layer.msg('ID：'+ data.id + ' 的查看操作');
+            } else if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    $.ajax({
+                        type: "POST",
+                        url: "enterprise/delDeviceInfoByDeviceId?deviceId="+id,
+                        success: function(msg){
+                            if (msg=='success') {
+                                obj.del();
+                                layer.msg("删除成功");
+                                layer.close(index);
+                            }
+                        }
+                    });
+                });
+            } else if(obj.event === 'edit'){
+                layer.open({
+                    type:1,
+                    shadeClose: true,
+                    shade: 0.8,
+                    content:$("#select_prod"),
+                    area:['400px','450px'],
+                    btn: ['确定', '取消'],
+                    //当前层索引参数（index）、当前层的DOM对象（layero）
+                    success: function(index, layero){
+                        $("#manufacturerId").empty();
+                        $.ajax({
+                            type: "GET",
+                            url: "enterprise/getManufacturerInfoAll",
+                            data: "",
+                            success: function(msg){
+                              for (var i=0;i<msg.length;i++) {
+                                    $("#manufacturerId").append("<option value='"+msg[i].Id+"'>"
+                                        +msg[i].ManufacturerName+"</option>");
+                                }
+                                $("#id").val(id);
+                                $("#deviceNo").val(deviceNo);
+                                $("#nickName").val(nickName);
+                                $("#manufacturerId").val(manufacturerId);
+                                $("#deviceType").val(deviceType);
+                                $("input[name='status'][value="+status+"]").attr("checked",true);
+                                $("input[name='runStatus'][value="+runStatus+"]").attr("checked",true);
+
+                                $("#importTime").val( importTime);
+
+                                form.render();
+                            }
+                        })
+                    },yes: function(index, layero){
+                         id =$("#id").val();
+                         deviceNo =$("#deviceNo").val();
+                         nickName =$("#nickName").val();
+                         manufacturerId =$("#manufacturerId").val();
+                         status =$("input[name='status']").val();
+                        runStatus =$("input[name='runStatus']").val();
+                         importTime =$("#importTime").val();
+                        deviceType =$("#deviceType").val();
+
+                        $.ajax({
+                            type: "POST",
+                            url: "enterprise/updateDeviceById",
+                            data: "id="+id+"&deviceNo="+deviceNo+
+                             "&nickName="+nickName+"&manufacturerId="+manufacturerId+"&status="+status+
+                            "&runStatus="+runStatus+"&importTime="+importTime+"$deviceType="+deviceType ,
+                            success: function (msg) {
+                                if (msg=='success') {
+                                    $.ajax({
+                                        type: "GET",
+                                        url: "enterprise/getManufacturerInfoById",
+                                        data: "manufacturerId=" + manufacturerId,
+                                        success: function (msg) {
+                                            manufacturerName = msg[0].ManufacturerName;
+                                            obj.update({
+                                                DeviceNo: deviceNo,
+                                                NickName: nickName,
+                                                ManufacturerId: manufacturerId,
+                                                ManufacturerName: manufacturerName,
+                                                Status: status,
+                                                RunStatus: runStatus,
+                                                ImportDatetime: importTime,
+                                                DeviceType: deviceType
+                                            });
+                                            $("[data-field='Status']").children().each(function () {
+                                                if ($(this).text() == '1') {
+                                                    $(this).text("已销售")
+                                                } else if ($(this).text() == '0') {
+                                                    $(this).text("未销售")
+                                                }
+                                            });
+                                            $("[data-field='RunStatus']").children().each(function () {
+                                                if ($(this).text() == '1') {
+                                                    $(this).text("正在运行")
+                                                } else if ($(this).text() == '0') {
+                                                    $(this).text("未运行")
+                                                }
+                                            })
+                                            layer.msg("修改成功");
+                                            layer.close(index);
+                                        }
+                                    })
+                                }
+                            }
+                        })
+                    }
+                    ,btn2: function(index, layero){
+                        layer.close(index);
+                    }
+
+
+
+                })
+            }
+        });
+        //]]>
+    });
+
+</script>
+
+</body>
+</html>

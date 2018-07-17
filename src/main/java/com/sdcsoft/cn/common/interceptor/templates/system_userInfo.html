@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" >
+<head>
+
+    <title>客户信息</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}"/>
+    <link rel="stylesheet" th:href="@{/css/font_eolqem241z66flxr.css}"/>
+    <link rel="stylesheet" th:href="@{/css/deviceInfo.css}"/>
+    <link rel="stylesheet" th:href="@{/css/but_edit.css}"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote news_search">
+    <div class="layui-inline">
+        <div class="layui-input-inline">
+            <input type="text" value="" id="keyWord" placeholder="请输入关键字" class="layui-input search_input"/>
+        </div>
+        <a class="layui-btn search_btn" id="search">查询</a>
+        <div class="layui-inline">
+            <a class="layui-btn layui-btn-normal newsAdd_btn" id="customerAdd">添加信息</a>
+        </div>
+    </div>
+</blockquote>
+<div class="layui-form news_list">
+    <table id="enterpriseInfo" lay-filter="test"></table>
+    <script type="text/html" id="barEdit">
+        <!-- <a class="layui-btn layui-btn-primary layui-btn-mini"   lay-event="detail">查看</a>-->
+        <a class="layui-btn layui-btn-mini layui-btn-edit"     lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-mini layui-btn-edit" lay-event="del">删除</a>
+        <a class="layui-btn  layui-btn-warm layui-btn-mini layui-btn-edit" lay-event="role">角色分配</a>
+    </script>
+</div>
+
+<div id="select_prod" class="layui-form" hidden="hidden">
+    <form class="layui-form" >
+        <div class="layui-form-item"  >
+            <label class="layui-form-label">组织类型</label>
+            <div class="layui-input-block">
+                <input type="radio" name="orgType" value="0" title="系统" />
+                <input type="radio" name="orgType" value="1" title="公司"  />
+                <input type="radio" name="orgType" value="1" title="企业"  />
+                <input type="radio" name="orgType" value="1" title="客户"  />
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">组织名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="orgId" id="orgId" lay-verify="required" placeholder="请输入组织名称" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-block">
+                <input type="text" name="password" id="password" lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">手机号码</label>
+            <div class="layui-input-block">
+                <input type="text" name="mobile" id="mobile" lay-verify="required" placeholder="请输入手机号码" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-block">
+                <input type="text" name="email" id="email" lay-verify="required" placeholder="请输入邮箱" autocomplete="off" class="layui-input"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="0" title="已冻结" />
+                <input type="radio" name="status" value="1" title="未冻结"  />
+            </div>
+        </div>
+    </form>
+</div>
+<div id="select_prod1" class="layui-form" hidden="hidden">
+    <div class="layui-form-item">
+        <label class="layui-form-label">请选择角色</label>
+        <div class="layui-input-block" id="roleAdd">
+        </div>
+    </div>
+</div>
+<script th:src="@{/layui/layui.js}"></script>
+<script type="text/html" id="indexTpl">
+    {{d.LAY_TABLE_INDEX+1}}
+</script>
+
+<script >
+    layui.use(['table','element','layer','jquery','form'],  function(){
+        var table = layui.table;
+        var element = layui.element;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var form =layui.form;
+        //表格操作
+        //<![CDATA[
+        var tableIns = table.render({
+            elem: '#enterpriseInfo'
+            ,height: 350
+            ,url: 'manage/getUserInfo'//数据接口
+            ,page: true //开启分页
+            ,cols: [[ //表头
+                { type: 'numbers',title: '序号',templet: '#indexTpl',width:50}
+                ,{field: 'realName', title: '用户名',sort:true, width:200}
+                ,{field: 'mobile', title: '联系电话', width:150}
+                ,{field: 'email', title: '邮箱', width:150}
+                ,{field: 'status', title: '状态', width:100}
+                ,{field: 'lastLoginDatetime', title: '最后登录时间', width:200}
+                ,{field:'', title: '操作', width:300,toolbar:"#barEdit"}
+            ]]
+            ,done: function(res, page, count){
+                //如果是异步请求数据方式，res即为你接口返回的信息。
+
+                //分类显示中文名称
+                $("[data-field='status']").children().each(function(){
+                    if($(this).text()=='0'){
+                        $(this).text("已冻结")
+                    }else if($(this).text()=='1'){
+                        $(this).text("未冻结")
+                    }
+                });
+            }
+        });
+        //关键字搜索
+        $("#search").click(function () {
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    nameLike: $("#keyWord").val()
+                }
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                },
+            });
+        });
+        $("#customerAdd").click(function () {
+            layer.open({
+                type:1,
+                shadeClose: true,
+                shade: 0.8,
+                content:$("#select_prod"),
+                area:['500px','420px'],
+                btn: ['确定', '取消'],
+                success: function(index, layero){
+                    //清空操作
+                    $("input[name='status'][value="+0+"]").attr("checked",true);
+                    form.render();
+                },
+                yes: function(index, layero){
+                    orgType =status =$("input[name='orgType']:checked").val();
+                    orgId =$("#orgId").val();
+                    password =$("#password").val();
+                    mobile =$("#mobile").val();
+                    email =$("#email").val();
+                    weiXin =$("#weiXin").val();
+                    qQ =$("#qQ").val();
+                    realName =$("#realName").val();
+                    status =$("input[name='status']:checked").val();
+                    lastLoginDatetime =$("#lastLoginDatetime").val();
+                    mark =$("#mark").val();
+                    isDeleted =$("#isDeleted").val();
+                    $.ajax({
+                        type: "POST",
+                        url: "manage/addUserInfo",
+                        data: "orgType="+orgType+
+                        "&orgId="+orgId  +
+                        "&password="+password +
+                        "&mobile="+mobile +
+                        "&email="+email +
+                        "&qQ="+qQ +
+                        "&realName="+realName+
+                        "&status="+status+
+                        "&lastLoginDatetime="+lastLoginDatetime+
+                        "&mark="+mark ,
+                  //      "&isDeleted="+isDeleted ,
+                        success: function (msg) {
+                            layer.msg("添加成功");
+                            layer.close(index);
+                            location.reload();
+                        }
+                    })
+                }
+                ,btn2: function(index, layero){
+                    layer.close(index);
+                }
+            })
+        })
+        table.on('tool(test)', function(obj){
+            var data = obj.data;
+            var id =data.id;
+            var orgType =data.orgType;
+            var orgId =data.orgId;
+            var password =data.password;
+            var mobile =data.mobile;
+            var email =data.email;
+            var weiXin =data.weiXin;
+            var qQ =data.qQ;
+            var realName =data.realName;
+            var status =data.status;
+            var lastLoginDatetime =data.lastLoginDatetime;
+            var mark =data.mark;
+            var isDeleted =data.isDeleted;
+
+            if(obj.event === 'detail'){
+                layer.msg('ID：'+ data.id + ' 的查看操作');
+            } else if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    $.ajax({
+                        type: "GET",
+                        url: "company/delEnterpriseInfo?enterpriseId="+id,
+                        success: function(msg){
+                            if (msg) {
+                                obj.del();
+                                layer.msg("删除成功");
+                                layer.close(index);
+                            }
+                        }
+                    });
+                });
+
+            } else if(obj.event === 'edit'){
+                layer.open({
+                    type: 1,
+                    title: '编辑企业信息',
+                    shadeClose: true,
+                    shade: 0.8,
+                    content:$("#select_prod"),
+                    area:['400px','300px'],
+                    btn: ['确定', '取消'],
+                    //当前层索引参数（index）、当前层的DOM对象（layero）
+                    success: function(index, layero){
+                        $("#enterpriseName").val(enterpriseName);
+                        $("input[name='status'][value="+status+"]").attr("checked",true);
+                        form.render();
+                    },
+                    yes: function(index, layero){
+                        enterpriseName=$("#enterpriseName").val();
+                        status=$("input[name='status']:checked").val();
+                        $.ajax({
+                            type: "GET",
+                            url: "company/updateEnterpriseInfo",
+                            data: "enterpriseId="+id+"&enterpriseName="+enterpriseName+ "&status="+status ,
+                            success: function (msg) {
+                                if (msg){
+                                    obj.update({
+                                        Id: id,
+                                        EnterpriseName: enterpriseName,
+                                        Status:status
+                                    });
+
+                                    $("[data-field='Status']").children().each(function(){
+                                        if($(this).text()=='1'){
+                                            $(this).text("未冻结")
+                                        }else if($(this).text()=='0'){
+                                            $(this).text("已冻结")
+                                        }
+                                    });
+                                    layer.msg("修改成功");
+                                    layer.close(index);
+                                }
+
+                            }
+                        })
+                    }
+                    ,btn2: function(index, layero){
+                        layer.close(index);
+                    }
+                });
+            }else if(obj.event === 'role'){
+
+                layer.open({
+                    type:1,
+                    title:'角色分配',
+                    shadeClose: true,
+                    shade: 0.8,
+                    content:$("#select_prod1"),
+                    area:['400px','250px'],
+                    btn: ['确定', '取消'],
+                    success: function(index, layero){
+                        $.ajax({
+                            type: "GET",
+                            url: "manage/getRoleInfoAll",
+                            data: "",
+                            success: function(msg){
+                                $("#roleAdd").empty();
+                                for (var i=0;i<msg.length;i++) {
+                                    $("#roleAdd") .append("<input type='checkbox' name='role' value='"+msg[i].roleId+"' title='"+msg[i].roleName+"'/>");
+                                }
+                                $.ajax({
+                                    type: "GET",
+                                    url: "manage/getRoleInfoByUserId?userId="+id,
+                                    data: "",
+                                    success: function(msg){
+                                         for (var i=0;i<msg.length;i++) {
+                                             $("input[name='role'][value="+msg[i].roleId+"]").attr("checked",true);
+                                             form.render();
+                                         }
+                                    }
+                                })
+                            }
+                        })
+
+                    },
+                    yes: function(index, layero){
+                        var arr=[];
+                        $("input:checkbox[name='role']:checked").each(function() { // 遍历name=role的多选框
+                           arr.push( Number($(this).val()));  // 每一个被选中项的值
+                        });
+                        $.ajax({
+                            type: "GET",
+                            url: "manage/addUserRole",
+                            data:  "userId="+id+"&array="+arr,
+                            success: function (msg) {
+                                layer.msg("更改成功");
+                                layer.close(index);
+
+                            }
+                        })
+                    }
+                    ,btn2: function(index, layero){
+                        layer.close(index);
+                    }
+                });
+
+            }
+        });
+        //]]>
+    });
+
+</script>
+</body>
+</html>
